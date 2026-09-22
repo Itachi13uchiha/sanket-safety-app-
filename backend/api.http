@@ -1,0 +1,116 @@
+### Sanket API playground – install the "REST Client" extension (humao.rest-client),
+### then click "Send Request" above any request. Run `npm run seed -- --demo` first.
+
+@base = http://localhost:4000
+@deviceKey = my-local-device-key-change-me-0123456789abcdef
+
+### ── Health ────────────────────────────────────────────
+GET {{base}}/health
+
+### ── Citizen: meta (labels in Hindi; use lang=mr for Marathi) ──
+GET {{base}}/v1/meta?lang=hi
+
+### ── Citizen: start an anonymous session ──────────────
+# @name session
+POST {{base}}/v1/anon/session
+Content-Type: application/json
+
+{ "deviceKey": "{{deviceKey}}" }
+
+###
+@anonToken = {{session.response.body.token}}
+
+### ── Citizen: submit a report ─────────────────────────
+# @name report
+POST {{base}}/v1/reports
+Authorization: Bearer {{anonToken}}
+Idempotency-Key: demo-report-0001
+Content-Type: application/json
+
+{
+  "category": "harassment",
+  "when": "now",
+  "lat": 18.5289,
+  "lng": 73.8744,
+  "locationSource": "current",
+  "note": "Group blocking the path near the exit"
+}
+
+### ── Citizen: my reports / one report ─────────────────
+GET {{base}}/v1/reports/mine
+Authorization: Bearer {{anonToken}}
+
+###
+GET {{base}}/v1/reports/mine/{{report.response.body.id}}
+Authorization: Bearer {{anonToken}}
+
+### ── Citizen: home, map, alerts, patterns ─────────────
+GET {{base}}/v1/home?lat=18.5289&lng=73.8744
+
+###
+GET {{base}}/v1/map?lat=18.5289&lng=73.8744&radiusKm=5&range=month
+
+###
+GET {{base}}/v1/alerts?lat=18.5289&lng=73.8744
+
+###
+GET {{base}}/v1/patterns/nearby?lat=18.5289&lng=73.8744&radiusKm=5
+
+### ── Authority: step 1 – password ─────────────────────
+# @name login
+POST {{base}}/v1/auth/login
+Content-Type: application/json
+
+{ "identifier": "PN-SUP-0142", "password": "ChangeMe-Now-2026" }
+
+### ── Authority: step 2 – OTP (devOtp is returned only in development) ──
+# @name verify
+POST {{base}}/v1/auth/verify-otp
+Content-Type: application/json
+
+{ "challengeId": "{{login.response.body.challengeId}}", "otp": "{{login.response.body.devOtp}}" }
+
+###
+@staffToken = {{verify.response.body.accessToken}}
+
+### ── Authority: dashboard ─────────────────────────────
+GET {{base}}/v1/authority/dashboard
+Authorization: Bearer {{staffToken}}
+
+###
+GET {{base}}/v1/authority/patterns
+Authorization: Bearer {{staffToken}}
+
+###
+GET {{base}}/v1/authority/alerts
+Authorization: Bearer {{staffToken}}
+
+###
+GET {{base}}/v1/authority/reports?status=linked&pageSize=10
+Authorization: Bearer {{staffToken}}
+
+###
+GET {{base}}/v1/authority/analytics?range=30d
+Authorization: Bearer {{staffToken}}
+
+###
+GET {{base}}/v1/authority/audit-logs
+Authorization: Bearer {{staffToken}}
+
+###
+GET {{base}}/v1/authority/audit-logs/verify
+Authorization: Bearer {{staffToken}}
+
+### ── Authority: act on an alert (paste an alert id from the list above) ──
+POST {{base}}/v1/authority/alerts/AL-XXXXXX/action
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{ "action": "start_monitoring", "note": "Watching the evening window" }
+
+### ── Authority: create a case from a pattern (supervisor/admin only) ──
+POST {{base}}/v1/authority/cases
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{ "patternId": "PT-XXXXXX", "priority": "high" }

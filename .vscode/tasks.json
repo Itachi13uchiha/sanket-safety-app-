@@ -1,0 +1,16 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run Sanket (API + Web)",
+      "type": "shell",
+      "command": "npm run dev",
+      "isBackground": true,
+      "problemMatcher": [],
+      "group": { "kind": "build", "isDefault": true },
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    { "label": "Load demo data", "type": "shell", "command": "npm run seed", "problemMatcher": [] },
+    { "label": "Run API tests", "type": "shell", "command": "npm test", "problemMatcher": [], "group": "test" }
+  ]
+}
