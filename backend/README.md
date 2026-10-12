@@ -172,6 +172,24 @@ close automatically after 7 days. All thresholds are editable at runtime via `PU
 
 ## 4. Deploying for real
 
+### Recommended deployment for the current SQLite implementation (Render)
+
+The current application uses `better-sqlite3`; it does **not** use the `DATABASE_URL` shown in older example environment files. Do not point this code at a PostgreSQL URL without migrating the database layer.
+
+A Render blueprint is included at the repository root in `render.yaml`. It deploys the backend with a persistent disk mounted at `/var/data`, stores SQLite at `/var/data/sanket.db`, seeds the built-in demo areas/staff/reports once, and exposes `/health` as the health check. Persistent disks require a paid Render web-service plan and support a single backend instance for this SQLite setup.
+
+1. In Render, choose **New → Blueprint**, connect this GitHub repository, and apply `render.yaml`.
+2. Wait for the service to deploy and confirm its `/health` endpoint returns `{"status":"ok"}`.
+3. Copy the Render service URL (for example, `https://sanket-backend.onrender.com`).
+4. In the Vercel **frontend** project's environment variables, set `VITE_API_URL` to that Render URL (no trailing slash), then redeploy the frontend.
+5. In the Render service environment, ensure `CORS_ORIGINS` includes the exact origin of the deployed frontend. Keep `JWT_SECRET`, `PEPPER`, and `SEED_ADMIN_PASSWORD` secret and do not rotate `PEPPER` after real anonymous identities have been created.
+
+The blueprint enables the demo seed explicitly for initial setup. The seed script uses a marker in the persistent database so subsequent deploys/restarts do not duplicate demo reports. If the database already contains real data, back it up before changing deployment or seeding.
+
+### Vercel limitation
+
+The Vercel `/tmp` SQLite file is temporary and can differ between serverless instances. It is not a persistent production database. The current synchronous SQLite code therefore needs a persistent-volume host such as the Render blueprint above, or a deliberate database-layer migration to a serverless-compatible managed database. Do not expect records from a local `data/sanket.db` file to appear on a newly deployed service automatically; importing that file is a separate recovery step.
+
 1. Set `NODE_ENV=production`, and **strong `JWT_SECRET` and `PEPPER`** (the server refuses to start without them).
    Generate: `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"`.
    Never change `PEPPER` afterwards – it would orphan every anonymous identity.
