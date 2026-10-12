@@ -5,10 +5,16 @@ import { config } from '../config.js';
 import { MIGRATIONS } from './schema.js';
 
 function open(): Database.Database {
-  if (config.DATABASE_PATH !== ':memory:') {
-    fs.mkdirSync(path.dirname(path.resolve(config.DATABASE_PATH)), { recursive: true });
+  // Vercel's deployment filesystem is read-only. Relative SQLite paths must use
+  // /tmp there; local development keeps the configured path unchanged.
+  const databasePath = process.env.VERCEL === '1' && !path.isAbsolute(config.DATABASE_PATH)
+    ? path.join('/tmp', config.DATABASE_PATH)
+    : config.DATABASE_PATH;
+
+  if (databasePath !== ':memory:') {
+    fs.mkdirSync(path.dirname(path.resolve(databasePath)), { recursive: true });
   }
-  const conn = new Database(config.DATABASE_PATH);
+  const conn = new Database(databasePath);
   conn.pragma('journal_mode = WAL');
   conn.pragma('synchronous = NORMAL');
   conn.pragma('foreign_keys = ON');
