@@ -18,7 +18,8 @@ export function createApp() {
   app.set('trust proxy', config.TRUST_PROXY);
 
   app.use(requestId);
-  app.use(helmet());
+  const helmetMiddleware = (helmet as unknown as () => express.RequestHandler)();
+  app.use(helmetMiddleware);
   app.use(
     cors({
       origin: (origin, cb) => cb(null, !origin || config.corsOrigins.includes(origin)),
