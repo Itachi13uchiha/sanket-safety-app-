@@ -1,6 +1,7 @@
 import { langStore, staffStore } from '../state/app';
 
-export const BASE = `${import.meta.env.VITE_API_URL ?? ''}/v1`;
+const API_ORIGIN = (import.meta.env.VITE_API_URL ?? '').trim().replace(/\/+$/, '');
+export const BASE = `${API_ORIGIN}/v1`;
 
 export class ApiError extends Error {
   constructor(
@@ -105,7 +106,8 @@ function buildUrl(path: string, query?: Query): string {
   const qs = new URLSearchParams();
   for (const [k, v] of Object.entries(query ?? {})) if (v !== undefined && v !== null && v !== '') qs.set(k, String(v));
   const s = qs.toString();
-  return `${BASE}${path}${s ? `?${s}` : ''}`;
+  const normalizedPath = path.replace(/^\/+/, '');
+  return `${BASE}/${normalizedPath}${s ? `?${s}` : ''}`;
 }
 
 export async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
