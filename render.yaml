@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: sanket-backend
+    runtime: node
+    plan: starter
+    region: singapore
+    rootDir: backend
+    buildCommand: npm ci && npm run build
+    startCommand: npm run seed -- --demo && npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_PATH
+        value: /var/data/sanket.db
+      - key: ALLOW_PRODUCTION_DEMO_SEED
+        value: "true"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PEPPER
+        generateValue: true
+      - key: SEED_ADMIN_PASSWORD
+        generateValue: true
+      - key: SEED_ADMIN_EMAIL
+        value: admin@sanket.local
+      - key: CORS_ORIGINS
+        value: https://sanket-safety-app.vercel.app,https://sanket-safety-app-4z8h.vercel.app
+      - key: TRUST_PROXY
+        value: "1"
+      - key: JOBS_ENABLED
+        value: "false"
+    disk:
+      name: sanket-sqlite-data
+      mountPath: /var/data
+      sizeGB: 1
