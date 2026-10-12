@@ -1,6 +1,6 @@
 import { langStore, staffStore } from '../state/app';
 
-const API_ORIGIN = (import.meta.env.VITE_API_URL ?? '').trim().replace(/\/+$/, '');
+const API_ORIGIN = (import.meta.env.VITE_API_URL ?? 'https://sanket-safety-app-4z8h.vercel.app').trim().replace(/\/+$/, '');
 export const BASE = `${API_ORIGIN}/v1`;
 
 export class ApiError extends Error {
