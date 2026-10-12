@@ -58,3 +58,14 @@ export function createApp() {
   app.use(errorHandler);
   return app;
 }
+
+// Vercel's Node.js runtime expects a default-exported request handler.
+// Cache the Express app across warm invocations; server.ts can still use createApp().
+let vercelApp: ReturnType<typeof createApp> | undefined;
+export default function handler(
+  req: express.Request,
+  res: express.Response,
+) {
+  vercelApp ??= createApp();
+  return vercelApp(req, res);
+}
