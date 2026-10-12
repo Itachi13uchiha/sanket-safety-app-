@@ -58,5 +58,9 @@ export const config = {
   isTest: env.NODE_ENV === 'test',
   JWT_SECRET: env.JWT_SECRET ?? DEV_SECRET,
   PEPPER: env.PEPPER ?? `${DEV_SECRET}-pepper`,
-  corsOrigins: env.CORS_ORIGINS.split(',').map((s) => s.trim()).filter(Boolean),
+  // Always allow the deployed public frontend, even when CORS_ORIGINS is set for other origins.
+  corsOrigins: [...new Set([
+    ...env.CORS_ORIGINS.split(',').map((s) => s.trim()).filter(Boolean),
+    'https://sanket-safety-app.vercel.app',
+  ])],
 } as const;
