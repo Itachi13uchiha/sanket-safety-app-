@@ -1,7 +1,7 @@
 /**
  * Usage:
  *   npm run seed              → areas + the admin account from .env
- *   npm run seed -- --demo    → also demo staff and ~10 days of realistic sample reports (development only)
+ *   npm run seed -- --demo    → demo staff and sample reports (production requires ALLOW_PRODUCTION_DEMO_SEED=true; seeded once per persistent database)
  */
 import { config } from '../src/config.js';
 import { db } from '../src/db/index.js';
@@ -11,8 +11,12 @@ import type { Category } from '../src/lib/i18n.js';
 import { DAY, HOUR, MIN, startOfLocalDay } from '../src/lib/time.js';
 
 const demo = process.argv.includes('--demo');
-if (demo && config.isProd) {
-  console.error('Refusing to load demo data in production.');
+if (demo && config.isProd && process.env.ALLOW_PRODUCTION_DEMO_SEED !== 'true') {
+  console.error('Refusing to load demo data in production unless ALLOW_PRODUCTION_DEMO_SEED=true is explicitly set.');
+  process.exit(1);
+}
+if (demo && config.isProd && !process.env.SEED_ADMIN_PASSWORD) {
+  console.error('Set a strong SEED_ADMIN_PASSWORD before seeding demo staff in production.');
   process.exit(1);
 }
 
@@ -28,6 +32,13 @@ const adminId = await upsertStaff({
 console.log(`✔ Areas: ${AREAS.length}   ✔ Admin: ${config.SEED_ADMIN_EMAIL} (id ${adminId})`);
 
 if (demo) {
+  // On a persistent production database, do not create duplicate sample reports on each deploy/restart.
+  const completed = db.prepare("SELECT value FROM settings WHERE key = 'demo_seed_completed_at'").get() as { value: string } | undefined;
+  if (completed) {
+    console.log(`✔ Demo data already seeded at ${completed.value}; skipping duplicate demo records.`);
+    process.exit(0);
+  }
+
   const pw = config.SEED_ADMIN_PASSWORD;
   await upsertStaff({ officialId: 'PN-SUP-0142', email: 'insp.mehta@police.gov.in', name: 'Insp. K. Mehta', role: 'supervisor', password: pw });
   await upsertStaff({ officialId: 'PN-OFC-0231', email: 'sgt.patil@police.gov.in', name: 'Sgt. R. Patil', role: 'officer', password: pw });
@@ -106,4 +117,7 @@ if (demo) {
   console.log('  supervisor  PN-SUP-0142  / insp.mehta@police.gov.in');
   console.log('  officer     PN-OFC-0231  / sgt.patil@police.gov.in');
   console.log('  (OTP is printed in this server console when DEV_EXPOSE_OTP=true)');
+
+  db.prepare("INSERT INTO settings(key, value, updated_at) VALUES('demo_seed_completed_at', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at")
+    .run(new Date().toISOString(), Date.now());
 }
