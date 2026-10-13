@@ -1,12 +1,7 @@
 -- PostgreSQL schema for Sanket's Neon database.
 -- Epoch timestamps are stored as BIGINT milliseconds to preserve existing data semantics.
--- Apply only after reviewing the runtime migration plan; this file does not import or copy data.
-PRAGMA user_version` tracks the applied migration so future
- * changes can be appended to MIGRATIONS without touching earlier ones.
- */
-export const MIGRATIONS: string[] = [
-  /* 1 ─ initial schema */ `
-  CREATE TABLE IF NOT EXISTS reporters (
+-- Review alongside runtime conversion before applying to a database.
+CREATE TABLE IF NOT EXISTS reporters (
     id              TEXT PRIMARY KEY,               
     created_at BIGINT NOT NULL,
     behavior        REAL NOT NULL DEFAULT 1.0,      
