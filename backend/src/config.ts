@@ -11,6 +11,7 @@ const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().min(1).max(65535).default(4000),
   DATABASE_PATH: z.string().min(1).default('./data/sanket.db'),
+  DATABASE_URL: z.string().url().optional(),
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters').optional(),
   PEPPER: z.string().min(32, 'PEPPER must be at least 32 characters').optional(),
   CORS_ORIGINS: z.string().default('http://localhost:5173,http://localhost:8443'),
