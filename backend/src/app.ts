@@ -5,6 +5,7 @@ import express from 'express';
 import helmet from 'helmet';
 import { config } from './config.js';
 import { db } from './db/index.js';
+import { pgQuery } from './db/postgres.js';
 import { accessLog, errorHandler, globalLimiter, notFoundHandler, requestId } from './middleware/core.js';
 import { authRouter } from './routes/auth.js';
 import { authorityRouter } from './routes/authority/index.js';
@@ -34,8 +35,11 @@ export function createApp() {
   app.use(globalLimiter);
 
   app.get('/health', (_req, res) => res.json({ status: 'ok' }));
-  app.get('/ready', (_req, res) => {
+  app.get('/ready', async (_req, res) => {
+    // During the staged migration, keep checking the legacy runtime DB and also
+    // verify Neon connectivity whenever DATABASE_URL is configured.
     db.prepare('SELECT 1').get();
+    if (config.DATABASE_URL) await pgQuery('SELECT 1');
     res.json({ status: 'ready' });
   });
 
