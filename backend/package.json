@@ -13,7 +13,8 @@
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "seed": "tsx scripts/seed.ts",
-    "test": "tsx --test test/*.test.ts"
+    "test": "tsx --test test/*.test.ts",
+    "check:neon": "tsx scripts/check-neon-schema.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
